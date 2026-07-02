@@ -1,0 +1,244 @@
+// filename: index.tsx
+// Full SearchtechGBP SaaS Platform - Single File Build
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Zap, BarChart, Bot, Star, ShieldCheck, Search, Activity, Image, 
+  AlertCircle, ArrowRight, Menu, X, LayoutDashboard, LogOut, CheckCircle2
+} from 'lucide-react';
+
+// --- CORE AUDIT ENGINE ---
+interface AuditResult {
+  score: number;
+  breakdown: { profile: number; seo: number; content: number; review: number; media: number; activity: number; };
+  issues: { category: string; severity: string; issue: string; explanation: string; fixSuggestion: string; }[];
+}
+
+const calculateHealthScore = (profile: any): AuditResult => {
+  let score = 0;
+  const issues: AuditResult['issues'] = [];
+  const breakdown = { profile: 0, seo: 0, content: 0, review: 0, media: 0, activity: 0 };
+
+  if (profile.name) breakdown.profile += 5;
+  if (profile.category) { breakdown.profile += 10; } else { issues.push({ category: 'PROFILE', severity: 'CRITICAL', issue: 'Missing Primary Category', explanation: 'Categories are the #1 ranking factor for local SEO.', fixSuggestion: 'Add a relevant primary category immediately.' }); }
+  if (profile.phone) { breakdown.profile += 5; } else { issues.push({ category: 'PROFILE', severity: 'WARNING', issue: 'Missing Phone Number', explanation: 'Customers use phone numbers to contact you directly.', fixSuggestion: 'Add a primary business phone number.' }); }
+  if (profile.website) { breakdown.profile += 5; } else { issues.push({ category: 'PROFILE', severity: 'WARNING', issue: 'Missing Website', explanation: 'Websites drive conversions and trust.', fixSuggestion: 'Add your business website URL.' }); }
+
+  if (profile.category && profile.category.includes(' ')) breakdown.seo += 10;
+  if (profile.address) { breakdown.seo += 10; } else { issues.push({ category: 'SEO', severity: 'CRITICAL', issue: 'Missing Address', explanation: 'Physical address is required for local map rankings.', fixSuggestion: 'Add your physical business address.' }); }
+
+  breakdown.content += 5;
+  issues.push({ category: 'CONTENT', severity: 'INFO', issue: 'Missing FAQs', explanation: 'FAQs help capture long-tail keyword searches.', fixSuggestion: 'Add 5 frequently asked questions about your business.' });
+
+  if ((profile.totalReviews || 0) > 10) { breakdown.review += 10; } else { issues.push({ category: 'REVIEW', severity: 'WARNING', issue: 'Low Review Count', explanation: 'Profiles with <10 reviews rank lower.', fixSuggestion: 'Run a WhatsApp/SMS review campaign.' }); }
+  if ((profile.rating || 0) >= 4.0) { breakdown.review += 10; } else { issues.push({ category: 'REVIEW', severity: 'CRITICAL', issue: 'Low Rating', explanation: 'Ratings below 4.0 deter potential customers.', fixSuggestion: 'Focus on customer satisfaction and reply to negative reviews.' }); }
+
+  breakdown.media += 5;
+  issues.push({ category: 'MEDIA', severity: 'INFO', issue: 'Missing Team Photos', explanation: 'Team photos increase trust and humanize your brand.', fixSuggestion: 'Upload photos of your staff and office interior.' });
+
+  const daysSinceActivity = profile.lastActivity ? (Date.now() - new Date(profile.lastActivity).getTime()) / (1000 * 60 * 60 * 24) : 30;
+  if (daysSinceActivity < 7) { breakdown.activity += 10; }
+  else if (daysSinceActivity < 14) { breakdown.activity += 5; issues.push({ category: 'ACTIVITY', severity: 'WARNING', issue: 'Stale Profile', explanation: 'Profiles inactive for >7 days drop in rankings.', fixSuggestion: 'Post a Google Update or Offer.' }); }
+  else { issues.push({ category: 'ACTIVITY', severity: 'CRITICAL', issue: 'Severe Inactivity', explanation: 'Your profile has not been updated in weeks.', fixSuggestion: 'Create a Google Post immediately.' }); }
+
+  score = Object.values(breakdown).reduce((a, b) => a + b, 0);
+  return { score: Math.min(score, 100), breakdown, issues };
+};
+
+// --- MOCK DATA ---
+const mockProfile = {
+  id: "1", name: "Tandoori Junction", category: "Indian Restaurant", address: "123 Main St, New Delhi", phone: "+91 98765 43210", website: null, rating: 3.8, totalReviews: 4, lastActivity: new Date("2023-10-15"),
+};
+
+// --- UI COMPONENTS ---
+const Logo = () => (
+  <div className="flex items-center gap-2">
+    <img src="https://z-cdn-media.chatglm.cn/files/5f04447a-b973-4ae3-a564-241cc569cb27.png?auth_key=1882969641-6891cd3081d141ddabdcb42f021f30ea-0-ba5239758281bd16640fdcf7f27c15b0" alt="Searchtech" className="h-6 object-contain" />
+    <span className="font-semibold text-lg tracking-tighter text-zinc-900 dark:text-white">GBP</span>
+  </div>
+);
+
+// --- VIEWS ---
+const LandingPage = ({ onNavigate }: { onNavigate: () => void }) => (
+  <div className="min-h-screen bg-white dark:bg-black">
+    <section className="pt-32 pb-20 lg:pt-48 lg:pb-32">
+      <div className="container mx-auto px-6 text-center">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 mb-6">
+            <span className="h-2 w-2 rounded-full bg-green-500"></span>
+            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">AI-Powered GBP Optimization</span>
+          </div>
+          <h1 className="text-5xl md:text-7xl font-medium tracking-tighter text-zinc-900 dark:text-white max-w-4xl mx-auto">
+            Dominate Local Search with <span className="text-blue-600 dark:text-blue-400">SearchtechGBP</span>
+          </h1>
+          <p className="mt-6 text-lg md:text-xl text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+            Audit, optimize, and manage your Google Business Profile using advanced AI. Improve rankings, generate content, and beat competitors.
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+            <button onClick={onNavigate} className="bg-zinc-900 dark:bg-white text-white dark:text-black rounded-full px-8 h-12 text-base font-medium hover:bg-zinc-700 dark:hover:bg-zinc-200 inline-flex items-center justify-center gap-2 transition-colors">
+              Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+
+    <section className="py-24 bg-zinc-50 dark:bg-zinc-950">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-zinc-900 dark:text-white">Everything you need to rank #1</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { icon: Zap, title: "AI Health Score", desc: "Instant 100-point audit of your Google Business Profile across 9 critical categories." },
+            { icon: Search, title: "Local SEO Analyzer", desc: "Discover missing keywords, weak density, and exactly where to add them for map ranking." },
+            { icon: Bot, title: "AI Content Studio", desc: "Generate SEO-optimized descriptions, posts, FAQs, and replies in any language and tone." },
+          ].map((f, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }} className="p-6 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm">
+              <div className="h-12 w-12 bg-zinc-100 dark:bg-zinc-900 rounded-lg flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400"><f.icon className="h-6 w-6" /></div>
+              <h3 className="text-xl font-medium text-zinc-900 dark:text-white">{f.title}</h3>
+              <p className="mt-2 text-zinc-500 dark:text-zinc-400 leading-relaxed">{f.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  </div>
+);
+
+const DashboardPage = () => {
+  const [audit, setAudit] = useState<AuditResult | null>(null);
+
+  useEffect(() => {
+    setTimeout(() => setAudit(calculateHealthScore(mockProfile)), 800);
+  }, []);
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-500";
+    if (score >= 50) return "text-yellow-500";
+    return "text-red-500";
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-50 dark:bg-black pt-24 pb-16">
+      <div className="container mx-auto px-6">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-medium tracking-tighter text-zinc-900 dark:text-white">Dashboard</h1>
+            <p className="text-zinc-500 mt-1">Profile: {mockProfile.name}</p>
+          </div>
+        </div>
+
+        {!audit ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
+            {[1, 2, 3].map(i => <div key={i} className="h-48 bg-zinc-200 dark:bg-zinc-900 rounded-xl"></div>)}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+              <div className="lg:col-span-1 bg-zinc-900 dark:bg-zinc-950 text-white border border-zinc-800 rounded-xl p-6">
+                <h3 className="text-zinc-400 text-sm font-medium mb-4">Overall Health Score</h3>
+                <div className="relative h-40 w-40 mx-auto">
+                  <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#333" strokeWidth="8" />
+                    <circle cx="50" cy="50" r="40" fill="none" stroke={audit.score >= 50 ? "#eab308" : "#ef4444"} strokeWidth="8" strokeDasharray={`${audit.score * 2.51} 251`} strokeLinecap="round" transform="rotate(-90 50 50)" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className={`text-5xl font-light ${getScoreColor(audit.score)}`}>{audit.score}</span>
+                    <span className="text-xs text-zinc-400 mt-1">out of 100</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[
+                  { label: "Profile", score: audit.breakdown.profile, max: 25, icon: Activity },
+                  { label: "SEO", score: audit.breakdown.seo, max: 20, icon: Search },
+                  { label: "Reviews", score: audit.breakdown.review, max: 20, icon: Star },
+                  { label: "Media", score: audit.breakdown.media, max: 10, icon: Image },
+                  { label: "Activity", score: audit.breakdown.activity, max: 25, icon: Zap },
+                ].map((sc, i) => (
+                  <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.1 }} className="p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:shadow-lg transition-shadow">
+                    <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400"><sc.icon className="h-4 w-4" /><span className="text-sm font-medium">{sc.label}</span></div>
+                    <div className="mt-4 text-3xl font-light text-zinc-900 dark:text-white">{sc.score}<span className="text-lg text-zinc-400">/{sc.max}</span></div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+              <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+                <h2 className="text-xl tracking-tight font-medium text-zinc-900 dark:text-white">Critical Issues & Recommendations</h2>
+              </div>
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {audit.issues.map((issue, idx) => (
+                  <div key={idx} className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className={`h-5 w-5 mt-0.5 shrink-0 ${issue.severity === 'CRITICAL' ? 'text-red-500' : 'text-yellow-500'}`} />
+                        <div>
+                          <h4 className="font-medium text-zinc-900 dark:text-white">{issue.issue}</h4>
+                          <p className="text-sm text-zinc-500 mt-1">{issue.explanation}</p>
+                        </div>
+                      </div>
+                      <span className={`shrink-0 text-xs font-medium px-2 py-1 rounded-full ${issue.severity === 'CRITICAL' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{issue.category}</span>
+                    </div>
+                    <div className="mt-4 pl-8 flex items-center gap-2">
+                      <button className="text-sm font-medium bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 text-blue-600 dark:text-blue-400 transition-colors inline-flex items-center gap-1">
+                        Fix Now <ArrowRight className="h-3 w-3" />
+                      </button>
+                      <span className="text-xs text-zinc-400">{issue.fixSuggestion}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- MAIN APP ENTRY ---
+export default function SearchtechGBPApp() {
+  const [view, setView] = useState<'landing' | 'dashboard'>('landing');
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-background font-sans antialiased">
+      <header className="fixed top-0 w-full z-50 bg-white/80 dark:bg-black/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800">
+        <nav className="container mx-auto px-6 h-16 flex items-center justify-between">
+          <Logo />
+          <div className="hidden md:flex items-center gap-4">
+            {view === 'dashboard' ? (
+              <button onClick={() => setView('landing')} className="text-sm font-medium bg-zinc-900 dark:bg-white text-white dark:text-black px-4 py-2 rounded-full hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors inline-flex items-center gap-2">
+                <LogOut className="h-4 w-4" /> Back to Home
+              </button>
+            ) : (
+              <button onClick={() => setView('dashboard')} className="text-sm font-medium bg-zinc-900 dark:bg-white text-white dark:text-black px-4 py-2 rounded-full hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors inline-flex items-center gap-2">
+                <LayoutDashboard className="h-4 w-4" /> Open Dashboard
+              </button>
+            )}
+          </div>
+          <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
+            {menuOpen ? <X /> : <Menu />}
+          </button>
+        </nav>
+      </header>
+
+      <AnimatePresence mode="wait">
+        {view === 'landing' ? (
+          <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <LandingPage onNavigate={() => setView('dashboard')} />
+          </motion.div>
+        ) : (
+          <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <DashboardPage />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
